@@ -1,14 +1,6 @@
 #include "file.h"
 
-char *buffer;
-char *tok;
-int width;
-int height;
-int limit_value;
-long file_size;
-struct PIXEL **matrix2d;
-
-void write_to_file ()
+void write_to_file (struct IMAGE *image)
 {
   FILE *fptr;
 
@@ -20,37 +12,36 @@ void write_to_file ()
     }
 
   // write header
-  fprintf (fptr, "P3\n%d %d\n%d\n", width, height, limit_value);
+  fprintf (fptr, "P3\n%d %d\n%d\n", image->width, image->height, image->limit_value);
 
   // write pixels
-  for (int j = 0; j < height; j++)
+  for (int j = 0; j < image->height; j++)
     {
-      for (int k = 0; k < width; ++k)
+      for (int k = 0; k < image->width; ++k)
         {
-          fprintf (fptr, "%hhu\t%hhu\t%hhu\t", matrix2d[j][k].r, matrix2d[j][k].g, matrix2d[j][k].b);
+          fprintf (fptr, "%hhu\t%hhu\t%hhu\t", image->matrix2d[j][k].r, image->matrix2d[j][k].g, image->matrix2d[j][k].b);
         }
     }
 
   // debug to make sure we have a result image smaller or equal in size to input
-  printf ("INPUT IMAGE SIZE: %ld\nNEW IMAGE SIZE: %ld\n", file_size, ftell (fptr));
+  printf ("INPUT IMAGE SIZE: %ld\nNEW IMAGE SIZE: %ld\n", image->file_size, ftell (fptr));
 
   // free memory
   fclose (fptr);
-  free (matrix2d);
 }
 
-void write_to_matrix ()
+void write_to_matrix (char* buffer, char* tok, struct IMAGE *image)
 {
   // allocating an array with the same width and height as input image
-  matrix2d = malloc (height * sizeof (matrix2d));
-  for (int i = 0; i < height; ++i)
+  image->matrix2d = malloc (image->height * sizeof (image->matrix2d));
+  for (int i = 0; i < image->height; ++i)
     {
-      matrix2d[i] = malloc (sizeof (struct PIXEL) * width);
+      image->matrix2d[i] = malloc (sizeof (struct PIXEL) * image->width);
     }
 
-  for (int h = 0; h < height; ++h)
+  for (int h = 0; h < image->height; ++h)
     {
-      for (int w = 0; w < width; ++w)
+      for (int w = 0; w < image->width; ++w)
         {
           // checking for any more comments
           if (tok[0] == '#')
@@ -67,7 +58,7 @@ void write_to_matrix ()
           pixel->b = strtoul (tok, &tok, 10);
 
           // assigning pixel to it's respective matrix position
-          matrix2d[h][w] = *pixel;
+          image->matrix2d[h][w] = *pixel;
 
           // freeing that one pixel
           free (pixel);
@@ -78,11 +69,11 @@ void write_to_matrix ()
   free (buffer);
 }
 
-void get_data ()
+void get_data (char* buffer, struct IMAGE *image)
 {
   // get rid of first line
   sscanf (buffer, "P3");
-  tok = strstr (buffer, "\n");
+  char *tok = strstr (buffer, "\n");
 
   // getting dimensions
   while (strlen (tok) != 0)
@@ -98,21 +89,26 @@ void get_data ()
         }
       else
         {
-          width = (int) strtol (tok, &tok, 10);
-          height = (int) strtol (tok, &tok, 10);
-          limit_value = (int) strtol (tok, &tok, 10);
+          image->width = (int) strtol (tok, &tok, 10);
+          image->height = (int) strtol (tok, &tok, 10);
+          image->limit_value = (int) strtol (tok, &tok, 10);
         }
 
       // all successfully assigned, else try again at beginning of buffer
-      if (width != 0 && height != 0 && limit_value != 0) break;
+      if (image->width != 0 && image->height != 0 && image->limit_value != 0) break;
       else tok = strstr (buffer, "\n");
     }
+
+  write_to_matrix (&buffer[0], &tok[0], image);
 }
 
 void wad (char *arg)
 {
+  struct IMAGE image;
+
   FILE *file;
   size_t result;
+  char *buffer;
 
   // open in binary mode
   file = fopen (arg, "rb");
@@ -124,32 +120,35 @@ void wad (char *arg)
 
   // get the file size
   fseek (file, 0, SEEK_END);
-  file_size = ftell (file);
+  image.file_size = ftell (file);
   rewind (file);
 
   // allocate memory
-  buffer = (char *) malloc (sizeof (char) * file_size);
+  buffer = (char *) malloc (sizeof (char) * image.file_size);
   if (buffer == NULL)
     {
       fputs ("Memory error", stderr);
       exit (2);
     }
 
-  // copy the file into buffer
-  result = fread (buffer, 1, file_size, file);
-  if (result != file_size)
+  // copy the file into buffer and close original file
+  result = fread (buffer, 1, image.file_size, file);
+  if (result != image.file_size)
     {
       fputs ("Reading error", stderr);
       exit (3);
     }
   fclose (file);
 
+  image.width = 0;
+  image.height = 0;
+  image.file_size = 0;
+  image.limit_value = 0;
   // getting data, exclude comments, create an array
-  get_data ();
-  write_to_matrix ();
+  get_data (&buffer[0], &image);
 
   // modify image, write to file
-  struct PIXEL **p_matrix = &matrix2d[0];
-  vertical_reflection (height, width, p_matrix);
-  write_to_file ();
+  vertical_reflection (&image);
+
+  write_to_file (&image);
 }
