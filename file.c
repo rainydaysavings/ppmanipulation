@@ -96,7 +96,7 @@ void get_data (char* buffer, struct IMAGE *image)
 
       // all successfully assigned, else try again at beginning of buffer
       if (image->width != 0 && image->height != 0 && image->limit_value != 0) break;
-      else tok = strstr (buffer, "\n");
+      //else tok = strstr (buffer, "\n");
     }
 
   write_to_matrix (&buffer[0], &tok[0], image);
@@ -142,7 +142,6 @@ void wad (char *arg)
 
   image.width = 0;
   image.height = 0;
-  image.file_size = 0;
   image.limit_value = 0;
   // getting data, exclude comments, create an array
   get_data (&buffer[0], &image);
