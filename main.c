@@ -18,26 +18,26 @@ typedef struct IMAGE {
 void v_flip (struct IMAGE *image)
 {
   pixel_t *pixel_column;
-  int mid = image->width / 2;
+  int mid = image->height / 2;
   for (int j = 0; j < mid; ++j)
     {
       pixel_column = image->matrix2d[j];
-      image->matrix2d[j] = image->matrix2d[image->width - j - 1];
-      image->matrix2d[image->width - j - 1] = pixel_column;
+      image->matrix2d[j] = image->matrix2d[image->height - j - 1];
+      image->matrix2d[image->height - j - 1] = pixel_column;
     }
 }
 
 void h_flip (struct IMAGE *image)
 {
   pixel_t pixel;
-  int mid = image->height / 2;
-  for (int j = 0; j < image->width; ++j)
+  int mid = image->width / 2;
+  for (int j = 0; j < image->height; ++j)
     {
       for (int k = 0; k < mid; ++k)
         {
           pixel = image->matrix2d[j][k];
-          image->matrix2d[j][k] = image->matrix2d[j][image->height - 1 - k];
-          image->matrix2d[j][image->height - 1 - k] = pixel;
+          image->matrix2d[j][k] = image->matrix2d[j][image->width - 1 - k];
+          image->matrix2d[j][image->width - 1 - k] = pixel;
         }
     }
 }
@@ -50,6 +50,7 @@ void d_flip (struct IMAGE *image)
 
 void rot_right (struct IMAGE *image)
 {
+  // need to change in writing to file the loops order to use this
   struct PIXEL **image1;
   image1 = malloc (image->width * sizeof (image->matrix2d));
   for (int i = 0; i < image->width; ++i)
@@ -70,12 +71,17 @@ void rot_right (struct IMAGE *image)
         }
     }
 
+  int tmp_width = image->width;
+  int tmp_height = image->height;
   image->matrix2d = image1;
+  image->width = tmp_height;
+  image->height = tmp_width;
   h_flip (image);
 }
 
 void rot_left (struct IMAGE *image)
 {
+  // need to change in writing to file the loops order to use this
   rot_right (image);
   v_flip (image);
   h_flip (image);
@@ -93,12 +99,12 @@ void write_to_file (struct IMAGE *image, char *f2_name)
     }
 
   // write header
-  fprintf (fptr, "P3\n%d %d\n%d\n", image->height, image->width, image->limit_value);
+  fprintf (fptr, "P3\n%d %d\n%d\n", image->width, image->height, image->limit_value);
 
   // write pixels
-  for (int j = 0; j < image->width; ++j)
+  for (int j = 0; j < image->height; ++j)
     {
-      for (int k = 0; k < image->height; ++k)
+      for (int k = 0; k < image->width; ++k)
         {
           fprintf (fptr, "%hhu %hhu %hhu\n", image->matrix2d[j][k].r, image->matrix2d[j][k].g, image->matrix2d[j][k].b);
         }
@@ -111,12 +117,12 @@ void write_to_file (struct IMAGE *image, char *f2_name)
 void write_to_stdout (struct IMAGE *image)
 {
   // write header
-  printf ("P3\n%d %d\n%d\n", image->height, image->width, image->limit_value);
+  printf ("P3\n%d %d\n%d\n", image->width, image->height, image->limit_value);
 
   // write pixels
-  for (int j = 0; j < image->width; ++j)
+  for (int j = 0; j < image->height; ++j)
     {
-      for (int k = 0; k < image->height; ++k)
+      for (int k = 0; k < image->width; ++k)
         {
           printf ("%hhu %hhu %hhu\n", image->matrix2d[j][k].r, image->matrix2d[j][k].g, image->matrix2d[j][k].b);
         }
@@ -295,45 +301,109 @@ void get_data_stdin (struct IMAGE *image)
   write_to_matrix (&buffer[0], &tok[0], image);
 }
 
-void wad (int argc, char *argv[argc], int option)
+void wad (int argc, char *argv[argc], int option, int mod)
 {
   struct IMAGE image;
 
   if (option == 1)
     {
       get_data (argv[1], &image);
-      rot_left (&image);
+
+      switch (mod)
+        {
+          case 1:
+            h_flip(&image);
+          break;
+          case 2:
+            v_flip(&image);
+          break;
+          case 3:
+            d_flip(&image);
+          break;
+          case 4:
+            rot_right(&image);
+          break;
+          case 5:
+            rot_left(&image);
+          break;
+          default:
+            break;
+        }
+
       write_to_stdout (&image);
     }
   else if (option == 2)
     {
       get_data (argv[1], &image);
-      rot_left(&image);
+
+      switch (mod)
+        {
+          case 1:
+            h_flip(&image);
+            break;
+          case 2:
+            v_flip(&image);
+            break;
+          case 3:
+            d_flip(&image);
+            break;
+          case 4:
+            rot_right(&image);
+            break;
+          case 5:
+            rot_left(&image);
+            break;
+          default:
+            break;
+        }
+
       write_to_file (&image, argv[1]);
     }
   else if (option == 3)
     {
       get_data_stdin (&image);
-      rot_left(&image);
+
+      switch (mod)
+        {
+          case 1:
+            h_flip(&image);
+          break;
+          case 2:
+            v_flip(&image);
+          break;
+          case 3:
+            d_flip(&image);
+          break;
+          case 4:
+            rot_right(&image);
+          break;
+          case 5:
+            rot_left(&image);
+          break;
+          default:
+            break;
+        }
+
       write_to_stdout (&image);
     }
 }
 
 int main (int argc, char *argv[])
 {
+  int mod = 5;
   switch (argc)
     {
       case 1:
-        wad (argc, argv, 3);
+        wad (argc, argv, 3, mod);
       break;
       case 2:
-        wad (argc, argv, 1);
+        wad (argc, argv, 1, mod);
       break;
       case 3:
-        wad (argc, argv, 2);
+        wad (argc, argv, 2, mod);
       break;
       default:
-        wad (argc, argv, 3);
+        wad (argc, argv, 3, mod);
       break;
     }
 
