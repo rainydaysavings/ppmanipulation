@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 typedef struct PIXEL {
     unsigned char r, g, b;
@@ -17,13 +18,67 @@ typedef struct IMAGE {
 void v_flip (struct IMAGE *image)
 {
   pixel_t *pixel_column;
-  int mid = image->height / 2;
+  int mid = image->width / 2;
   for (int j = 0; j < mid; ++j)
     {
       pixel_column = image->matrix2d[j];
-      image->matrix2d[j] = image->matrix2d[image->height - j - 1];
-      image->matrix2d[image->height - j - 1] = pixel_column;
+      image->matrix2d[j] = image->matrix2d[image->width - j - 1];
+      image->matrix2d[image->width - j - 1] = pixel_column;
     }
+}
+
+void h_flip (struct IMAGE *image)
+{
+  pixel_t pixel;
+  int mid = image->height / 2;
+  for (int j = 0; j < image->width; ++j)
+    {
+      for (int k = 0; k < mid; ++k)
+        {
+          pixel = image->matrix2d[j][k];
+          image->matrix2d[j][k] = image->matrix2d[j][image->height - 1 - k];
+          image->matrix2d[j][image->height - 1 - k] = pixel;
+        }
+    }
+}
+
+void d_flip (struct IMAGE *image)
+{
+  v_flip (image);
+  h_flip (image);
+}
+
+void rot_right (struct IMAGE *image)
+{
+  struct PIXEL **image1;
+  image1 = malloc (image->width * sizeof (image->matrix2d));
+  for (int i = 0; i < image->width; ++i)
+    {
+      image1[i] = malloc (sizeof (struct PIXEL) * image->height);
+    }
+
+  int n_rows = image->height;
+  int n_cols = image->width;
+  pixel_t *pixel_row;
+
+  for (int j = 0; j < n_rows; ++j)
+    {
+      pixel_row = image->matrix2d[j];
+      for (int k = 0; k < n_cols; ++k)
+        {
+          image1[k][j] = pixel_row[k];
+        }
+    }
+
+  image->matrix2d = image1;
+  h_flip (image);
+}
+
+void rot_left (struct IMAGE *image)
+{
+  rot_right (image);
+  v_flip (image);
+  h_flip (image);
 }
 
 void write_to_file (struct IMAGE *image, char *f2_name)
@@ -38,33 +93,30 @@ void write_to_file (struct IMAGE *image, char *f2_name)
     }
 
   // write header
-  fprintf (fptr, "P3\n%d %d\n%d\n", image->width, image->height, image->limit_value);
+  fprintf (fptr, "P3\n%d %d\n%d\n", image->height, image->width, image->limit_value);
 
   // write pixels
-  for (int j = 0; j < image->height; ++j)
+  for (int j = 0; j < image->width; ++j)
     {
-      for (int k = 0; k < image->width; ++k)
+      for (int k = 0; k < image->height; ++k)
         {
           fprintf (fptr, "%hhu %hhu %hhu\n", image->matrix2d[j][k].r, image->matrix2d[j][k].g, image->matrix2d[j][k].b);
         }
     }
 
-  // debug to make sure we have a result image smaller or equal in size to input
-  // printf ("INPUT IMAGE SIZE: %ld\nNEW IMAGE SIZE: %ld\n", image->file_size, ftell (fptr));
-
   // free memory
   fclose (fptr);
 }
 
-void write_to_file_stdin (struct IMAGE *image)
+void write_to_stdout (struct IMAGE *image)
 {
   // write header
-  printf ("P3\n%d %d\n%d\n", image->width, image->height, image->limit_value);
+  printf ("P3\n%d %d\n%d\n", image->height, image->width, image->limit_value);
 
   // write pixels
-  for (int j = 0; j < image->height; ++j)
+  for (int j = 0; j < image->width; ++j)
     {
-      for (int k = 0; k < image->width; ++k)
+      for (int k = 0; k < image->height; ++k)
         {
           printf ("%hhu %hhu %hhu\n", image->matrix2d[j][k].r, image->matrix2d[j][k].g, image->matrix2d[j][k].b);
         }
@@ -80,44 +132,8 @@ void write_to_matrix (char *buffer, char *tok, struct IMAGE *image)
       image->matrix2d[i] = malloc (sizeof (struct PIXEL) * image->width);
     }
 
-  for (int h = 0; h < image->height; ++h)
-    {
-      for (int w = 0; w < image->width; ++w)
-        {
-          // checking for any more comments
-          if (tok[0] == '#')
-            {
-              tok = strstr (tok, "\n");
-            }
-
-          // allocating ONE pixel
-          struct PIXEL *pixel = malloc (sizeof (struct PIXEL));
-
-          // reading each color info and moving to the next
-          pixel->r = strtoul (tok, &tok, 10);
-          pixel->g = strtoul (tok, &tok, 10);
-          pixel->b = strtoul (tok, &tok, 10);
-
-          // assigning pixel to it's respective matrix position
-          image->matrix2d[h][w] = *pixel;
-
-          // freeing that one pixel
-          free (pixel);
-        }
-    }
-
-  // free original buffer
-  free (buffer);
-}
-
-void get_data (char *buffer, struct IMAGE *image)
-{
-  // get rid of first line
-  sscanf (buffer, "P3");
-  char *tok = strstr (buffer, "\n");
-
-  // getting dimensions
-  while (strlen (tok) != 0)
+  int h = 0, w = 0, c = 0;
+  while (c != image->height * image->width)
     {
       // we can have comments after this
       if (tok[0] == '#')
@@ -128,51 +144,48 @@ void get_data (char *buffer, struct IMAGE *image)
         {
           tok = strstr (tok, "#");
         }
+      else if (tok[0] == '\n' || tok[0] == ' ')
+        {
+          tok += 1;
+        }
       else
         {
-          image->width = (int) strtol (tok, &tok, 10);
-          image->height = (int) strtol (tok, &tok, 10);
-          image->limit_value = (int) strtol (tok, &tok, 10);
-        }
+          // allocating ONE pixel
+          struct PIXEL *pixel = malloc (sizeof (struct PIXEL));
 
-      // all successfully assigned, else try again at beginning of buffer
-      if (image->width != 0 && image->height != 0 && image->limit_value != 0) break;
-      //else tok = strstr (buffer, "\n");
+          // reading each color info and moving to the next
+          pixel->r = strtoul (tok, &tok, 10);
+          pixel->g = strtoul (tok, &tok, 10);
+          pixel->b = strtoul (tok, &tok, 10);
+
+          // assigning pixel to it's respective matrix position
+          image->matrix2d[h][w] = *pixel;
+          c += 1;
+          w = c % image->width;
+          h = c / image->width;
+          // freeing that one pixel
+          free (pixel);
+        }
     }
 
-  write_to_matrix (&buffer[0], &tok[0], image);
+  // free original buffer
+  free (buffer);
 }
 
-void wad (int argc, char *argv[argc])
+void get_data (char *file_name, struct IMAGE *image)
 {
-  struct IMAGE image;
-
   FILE *file;
-  size_t result;
   char *buffer;
+  size_t result;
 
-  if (argc != 1)
-    {
-      file = fopen (argv[1], "rb");
-    }
-  else
-    {
-      file = stdin;
-    }
-
-  if (file == NULL)
-    {
-      fputs ("File error", stderr);
-      exit (1);
-    }
-
+  file = fopen (file_name, "rb");
   // get the file size
   fseek (file, 0, SEEK_END);
-  image.file_size = ftell (file);
+  image->file_size = ftell (file);
   rewind (file);
 
   // allocate memory
-  buffer = (char *) malloc (sizeof (char) * image.file_size);
+  buffer = (char *) malloc (sizeof (char) * image->file_size);
   if (buffer == NULL)
     {
       fputs ("Memory error", stderr);
@@ -180,39 +193,148 @@ void wad (int argc, char *argv[argc])
     }
 
   // copy the file into buffer and close original file
-  result = fread (buffer, 1, image.file_size, file);
-  if (result != image.file_size)
+  result = fread (buffer, 1, image->file_size, file);
+  if (result != image->file_size)
     {
       fputs ("Reading error", stderr);
       exit (3);
     }
   fclose (file);
 
-  image.width = 0;
-  image.height = 0;
-  image.limit_value = 0;
-  // getting data, exclude comments, create an array
-  get_data (&buffer[0], &image);
+  image->width = 0;
+  image->height = 0;
+  image->limit_value = 0;
 
-  // modify image, write to file
-  v_flip (&image);
+  // get rid of first line
+  sscanf (buffer, "P3");
+  char *tok = strstr (buffer, "\n");
 
-  if (argc == 1)
+  // getting dimensions
+  while (1)
     {
-      write_to_file (&image, argv[0]);
-    }
-  else if (argc == 3)
-    {
-      write_to_file (&image, argv[2]);
-    }
-  else
-    {
-      write_to_file_stdin (&image);
+      // we can have comments after this
+      if (tok[0] == '#')
+        {
+          tok = strstr (tok, "\n");
+        }
+      else if (tok[0] == '\n' && tok[1] == '#')
+        {
+          tok = strstr (tok, "#");
+        }
+      else if (tok[0] == '\n')
+        {
+          tok += 1;
+        }
+      else if (image->width == 0 && image->height == 0 && image->limit_value == 0)
+        {
+          image->width = (int) strtol (tok, &tok, 10);
+          image->height = (int) strtol (tok, &tok, 10);
+          image->limit_value = (int) strtol (tok, &tok, 10);
+
+          if (image->width != 0 && image->height != 0)
+            {
+              break;
+            }
+        }
     }
 
+  write_to_matrix (&buffer[0], &tok[0], image);
+}
+
+void get_data_stdin (struct IMAGE *image)
+{
+  FILE *file;
+  char *buffer;
+
+  file = stdin;
+
+  // allocate memory
+  buffer = (char *) malloc (sizeof (char) * INT_MAX);
+  fread (buffer, 1, INT_MAX, file);
+  fclose (file);
+
+  image->width = 0;
+  image->height = 0;
+  image->limit_value = 0;
+
+  // get rid of first line
+  sscanf (buffer, "P3");
+  char *tok = strstr (buffer, "\n");
+
+  // getting dimensions
+  while (1)
+    {
+      // we can have comments after this
+      if (tok[0] == '#')
+        {
+          tok = strstr (tok, "\n");
+        }
+      else if (tok[0] == '\n' && tok[1] == '#')
+        {
+          tok = strstr (tok, "#");
+        }
+      else if (tok[0] == '\n')
+        {
+          tok += 1;
+        }
+      else if (image->width == 0 && image->height == 0 && image->limit_value == 0)
+        {
+          image->width = (int) strtol (tok, &tok, 10);
+          image->height = (int) strtol (tok, &tok, 10);
+          image->limit_value = (int) strtol (tok, &tok, 10);
+
+          if (image->width != 0 && image->height != 0)
+            {
+              break;
+            }
+        }
+    }
+
+    image->file_size = image->width * image->height;
+
+  write_to_matrix (&buffer[0], &tok[0], image);
+}
+
+void wad (int argc, char *argv[argc], int option)
+{
+  struct IMAGE image;
+
+  if (option == 1)
+    {
+      get_data (argv[1], &image);
+      rot_left (&image);
+      write_to_stdout (&image);
+    }
+  else if (option == 2)
+    {
+      get_data (argv[1], &image);
+      rot_left(&image);
+      write_to_file (&image, argv[1]);
+    }
+  else if (option == 3)
+    {
+      get_data_stdin (&image);
+      rot_left(&image);
+      write_to_stdout (&image);
+    }
 }
 
 int main (int argc, char *argv[])
 {
-  wad (argc, argv);
+  switch (argc)
+    {
+      case 1:
+        wad (argc, argv, 3);
+      break;
+      case 2:
+        wad (argc, argv, 1);
+      break;
+      case 3:
+        wad (argc, argv, 2);
+      break;
+      default:
+        wad (argc, argv, 3);
+      break;
+    }
+
 }
