@@ -7,3 +7,6 @@ include_directories(.)
 
 add_executable(ppmanipulation
         main.c)
+
+add_executable(colour
+        colour.c)

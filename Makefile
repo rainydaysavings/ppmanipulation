@@ -58,10 +58,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /home/someone/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/211.6693.114/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /home/someone/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/211.6693.114/bin/cmake/linux/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -78,7 +78,7 @@ CMAKE_BINARY_DIR = /home/someone/Repositories/ppmanipulation
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/home/someone/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/211.6693.114/bin/cmake/linux/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -88,8 +88,8 @@ rebuild_cache/fast: rebuild_cache
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/home/someone/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/211.6693.114/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -130,6 +130,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named colour
+
+# Build rule for target.
+colour: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 colour
+.PHONY : colour
+
+# fast build rule for target.
+colour/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/colour.dir/build.make CMakeFiles/colour.dir/build
+.PHONY : colour/fast
+
+#=============================================================================
 # Target rules for targets named ppmanipulation
 
 # Build rule for target.
@@ -141,6 +154,33 @@ ppmanipulation: cmake_check_build_system
 ppmanipulation/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ppmanipulation.dir/build.make CMakeFiles/ppmanipulation.dir/build
 .PHONY : ppmanipulation/fast
+
+colour.o: colour.c.o
+
+.PHONY : colour.o
+
+# target to build an object file
+colour.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/colour.dir/build.make CMakeFiles/colour.dir/colour.c.o
+.PHONY : colour.c.o
+
+colour.i: colour.c.i
+
+.PHONY : colour.i
+
+# target to preprocess a source file
+colour.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/colour.dir/build.make CMakeFiles/colour.dir/colour.c.i
+.PHONY : colour.c.i
+
+colour.s: colour.c.s
+
+.PHONY : colour.s
+
+# target to generate assembly for a file
+colour.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/colour.dir/build.make CMakeFiles/colour.dir/colour.c.s
+.PHONY : colour.c.s
 
 main.o: main.c.o
 
@@ -177,7 +217,11 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... colour"
 	@echo "... ppmanipulation"
+	@echo "... colour.o"
+	@echo "... colour.i"
+	@echo "... colour.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
