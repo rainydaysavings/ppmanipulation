@@ -69,8 +69,8 @@
 					<DistClean command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
-			<Target title="ppmanipulation">
-				<Option output="/home/someone/Repositories/ppmanipulation/ppmanipulation" prefix_auto="0" extension_auto="0"/>
+			<Target title="transform">
+				<Option output="/home/someone/Repositories/ppmanipulation/transform" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/home/someone/Repositories/ppmanipulation"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
@@ -79,14 +79,14 @@
 					<Add directory="/home/someone/Repositories/ppmanipulation/."/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 ppmanipulation"/>
+					<Build command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 transform"/>
 					<CompileFile command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
-			<Target title="ppmanipulation/fast">
-				<Option output="/home/someone/Repositories/ppmanipulation/ppmanipulation" prefix_auto="0" extension_auto="0"/>
+			<Target title="transform/fast">
+				<Option output="/home/someone/Repositories/ppmanipulation/transform" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/home/someone/Repositories/ppmanipulation"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
@@ -95,7 +95,7 @@
 					<Add directory="/home/someone/Repositories/ppmanipulation/."/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 ppmanipulation/fast"/>
+					<Build command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 transform/fast"/>
 					<CompileFile command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/gmake -f &quot;/home/someone/Repositories/ppmanipulation/Makefile&quot;  VERBOSE=1 clean"/>
@@ -105,8 +105,8 @@
 		<Unit filename="/home/someone/Repositories/ppmanipulation/colour.c">
 			<Option target="colour"/>
 		</Unit>
-		<Unit filename="/home/someone/Repositories/ppmanipulation/main.c">
-			<Option target="ppmanipulation"/>
+		<Unit filename="/home/someone/Repositories/ppmanipulation/transform.c">
+			<Option target="transform"/>
 		</Unit>
 		<Unit filename="/home/someone/Repositories/ppmanipulation/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>

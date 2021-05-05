@@ -143,17 +143,17 @@ colour/fast:
 .PHONY : colour/fast
 
 #=============================================================================
-# Target rules for targets named ppmanipulation
+# Target rules for targets named transform
 
 # Build rule for target.
-ppmanipulation: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ppmanipulation
-.PHONY : ppmanipulation
+transform: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 transform
+.PHONY : transform
 
 # fast build rule for target.
-ppmanipulation/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ppmanipulation.dir/build.make CMakeFiles/ppmanipulation.dir/build
-.PHONY : ppmanipulation/fast
+transform/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transform.dir/build.make CMakeFiles/transform.dir/build
+.PHONY : transform/fast
 
 colour.o: colour.c.o
 
@@ -182,32 +182,32 @@ colour.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/colour.dir/build.make CMakeFiles/colour.dir/colour.c.s
 .PHONY : colour.c.s
 
-main.o: main.c.o
+transform.o: transform.c.o
 
-.PHONY : main.o
+.PHONY : transform.o
 
 # target to build an object file
-main.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ppmanipulation.dir/build.make CMakeFiles/ppmanipulation.dir/main.c.o
-.PHONY : main.c.o
+transform.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transform.dir/build.make CMakeFiles/transform.dir/transform.c.o
+.PHONY : transform.c.o
 
-main.i: main.c.i
+transform.i: transform.c.i
 
-.PHONY : main.i
+.PHONY : transform.i
 
 # target to preprocess a source file
-main.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ppmanipulation.dir/build.make CMakeFiles/ppmanipulation.dir/main.c.i
-.PHONY : main.c.i
+transform.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transform.dir/build.make CMakeFiles/transform.dir/transform.c.i
+.PHONY : transform.c.i
 
-main.s: main.c.s
+transform.s: transform.c.s
 
-.PHONY : main.s
+.PHONY : transform.s
 
 # target to generate assembly for a file
-main.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ppmanipulation.dir/build.make CMakeFiles/ppmanipulation.dir/main.c.s
-.PHONY : main.c.s
+transform.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transform.dir/build.make CMakeFiles/transform.dir/transform.c.s
+.PHONY : transform.c.s
 
 # Help Target
 help:
@@ -218,13 +218,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... colour"
-	@echo "... ppmanipulation"
+	@echo "... transform"
 	@echo "... colour.o"
 	@echo "... colour.i"
 	@echo "... colour.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... transform.o"
+	@echo "... transform.i"
+	@echo "... transform.s"
 .PHONY : help
 
 

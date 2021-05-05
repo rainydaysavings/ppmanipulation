@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <math.h>
 
 typedef struct PIXEL {
     unsigned char r, g, b;
@@ -15,8 +16,85 @@ typedef struct IMAGE {
     struct PIXEL **matrix2d;
 } image_t;
 
-void rgb_mod(int dR, int dG, int dB) {
+void rgb_mod(int dR, int dG, int dB, struct IMAGE *image) {
 
+  int r, g, b;
+  for (int j = 0; j < image->height; ++j)
+    {
+      for (int k = 0; k < image->width; ++k)
+        {
+          r = image->matrix2d[j][k].r + dR;
+          if (r > image->limit_value)
+            r = image->limit_value;
+          if (r < 0)
+            r = 0;
+
+          g = image->matrix2d[j][k].g + dG;
+          if (g > image->limit_value)
+            g = image->limit_value;
+          if (g < 0)
+            g = 0;
+
+          b = image->matrix2d[j][k].b + dB;
+          if (b > image->limit_value)
+            b = image->limit_value;
+          if (b < 0)
+            b = 0;
+
+          image->matrix2d[j][k].r = r;
+          image->matrix2d[j][k].g = g;
+          image->matrix2d[j][k].b = b;
+        }
+    }
+}
+
+void grey(struct IMAGE *image) {
+
+  int r, g, b;
+  for (int j = 0; j < image->height; ++j)
+    {
+      for (int k = 0; k < image->width; ++k)
+        {
+          r = image->matrix2d[j][k].r;
+          g = image->matrix2d[j][k].g;
+          b = image->matrix2d[j][k].b;
+
+          double mod = round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+          image->matrix2d[j][k].r = (int ) mod;
+          image->matrix2d[j][k].g = (int ) mod;
+          image->matrix2d[j][k].b = (int ) mod;
+        }
+    }
+}
+
+void bw(struct IMAGE *image, int threshold) {
+
+  int r, g, b;
+  for (int j = 0; j < image->height; ++j)
+    {
+      for (int k = 0; k < image->width; ++k)
+        {
+          r = image->matrix2d[j][k].r;
+          g = image->matrix2d[j][k].g;
+          b = image->matrix2d[j][k].b;
+
+          double mod = round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+
+          if (mod > threshold)
+            {
+              image->matrix2d[j][k].r = image->limit_value;
+              image->matrix2d[j][k].g = image->limit_value;
+              image->matrix2d[j][k].b = image->limit_value;
+            }
+          else
+            {
+              image->matrix2d[j][k].r = 0;
+              image->matrix2d[j][k].g = 0;
+              image->matrix2d[j][k].b = 0;
+            }
+
+        }
+    }
 }
 
 void write_to_file (struct IMAGE *image, char *f2_name)
@@ -233,43 +311,61 @@ void get_data_stdin (struct IMAGE *image)
   write_to_matrix (&buffer[0], &tok[0], image);
 }
 
-void wad (int argc, char *argv[argc], int option, int mod)
+void wad (char *filename, int option, int threshold)
 {
   struct IMAGE image;
-
   if (option == 1)
     {
-      get_data (argv[1], &image);
+      get_data (filename, &image);
+      bw(&image, threshold);
       write_to_stdout (&image);
     }
   else if (option == 2)
     {
-      get_data (argv[1], &image);
-      write_to_file (&image, argv[1]);
+      get_data (filename, &image);
+      bw(&image, threshold);
+      write_to_file (&image, filename);
     }
-  else if (option == 3)
+  else
     {
       get_data_stdin (&image);
+      bw(&image, threshold);
       write_to_stdout (&image);
     }
 }
 
 int main (int argc, char *argv[])
 {
-  int mod = 5;
-  switch (argc)
+  /*int dR, dG, dB;
+  dR = dG = dB = INT_MAX;
+  for (int i = 1; i < argc; ++i)
     {
-      case 1:
-        wad (argc, argv, 3, mod);
-      break;
+      char *cur = argv[i];
+      int cur_int = (int ) strtol (cur, &cur, 10);
+
+      if (dR == INT_MAX) dR = cur_int;
+      else if (dG == INT_MAX) dG = cur_int;
+      else
+        {
+          dB = cur_int;
+          mod = i;
+          break;
+        }
+    }*/
+
+  int mod = 0;
+  int threshold = (int ) strtol (argv[1], &argv[1], 10);
+  mod = argc - 1;
+  switch (mod)
+    {
       case 2:
-        wad (argc, argv, 1, mod);
+        wad (argv[mod], 1, threshold);
       break;
       case 3:
-        wad (argc, argv, 2, mod);
+        wad (argv[mod], 2, threshold);
       break;
       default:
-        wad (argc, argv, 3, mod);
+        wad (NULL, 3, threshold);
       break;
     }
 }
