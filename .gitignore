@@ -41,9 +41,6 @@
 *.su
 *.idb
 *.pdb
-cmake-build-debug
-cmake-build-debug-coverage
-CMakeFiles
 
 # Kernel Module Compile Results
 *.mod*
@@ -56,4 +53,3 @@ dkms.conf
 
 # Images
 *.ppm
-CMakeCache.txt
