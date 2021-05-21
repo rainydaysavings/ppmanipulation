@@ -6,9 +6,12 @@ set(CMAKE_C_STANDARD 11)
 include_directories(.)
 
 add_executable(transform
-        transform.c)
+        src/transform.c)
 
 add_executable(colour
-        colour.c)
+        src/colour.c)
 
 target_link_libraries(colour m)
+
+add_executable(recut
+        src/recut.c)

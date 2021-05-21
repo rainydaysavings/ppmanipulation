@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <math.h>
 
 typedef struct PIXEL {
     unsigned char r, g, b;
@@ -10,81 +11,40 @@ typedef struct PIXEL {
 typedef struct IMAGE {
     int height;
     int width;
+    int start_x;
+    int start_y;
+    int final_x;
+    int final_y;
     int limit_value;
     long file_size;
     struct PIXEL **matrix2d;
 } image_t;
 
-void v_flip (struct IMAGE *image)
+void recut (struct IMAGE *image)
 {
-  pixel_t *pixel_column;
-  int mid = image->height / 2;
-  for (int j = 0; j < mid; ++j)
-    {
-      pixel_column = image->matrix2d[j];
-      image->matrix2d[j] = image->matrix2d[image->height - j - 1];
-      image->matrix2d[image->height - j - 1] = pixel_column;
-    }
-}
+  int new_width = image->final_x - image->start_x;
+  int new_height = image->final_y - image->start_y;
 
-void h_flip (struct IMAGE *image)
-{
-  pixel_t pixel;
-  int mid = image->width / 2;
-  for (int j = 0; j < image->height; ++j)
+  struct PIXEL **recut_matrix = malloc (new_height * sizeof (recut_matrix));
+  for (int i = 0; i < new_height; ++i)
     {
-      for (int k = 0; k < mid; ++k)
+      recut_matrix[i] = malloc (sizeof (struct PIXEL) * new_width);
+    }
+
+  for (int j = image->start_y; j < image->final_y; ++j)
+    {
+      for (int k = image->start_x; k < image->final_x; ++k)
         {
-          pixel = image->matrix2d[j][k];
-          image->matrix2d[j][k] = image->matrix2d[j][image->width - 1 - k];
-          image->matrix2d[j][image->width - 1 - k] = pixel;
-        }
-    }
-}
-
-void d_flip (struct IMAGE *image)
-{
-  v_flip (image);
-  h_flip (image);
-}
-
-void rot_right (struct IMAGE *image)
-{
-  // need to change in writing to file the loops order to use this
-  struct PIXEL **image1;
-  image1 = malloc (image->width * sizeof (image->matrix2d));
-  for (int i = 0; i < image->width; ++i)
-    {
-      image1[i] = malloc (sizeof (struct PIXEL) * image->height);
-    }
-
-  int n_rows = image->height;
-  int n_cols = image->width;
-  pixel_t *pixel_row;
-
-  for (int j = 0; j < n_rows; ++j)
-    {
-      pixel_row = image->matrix2d[j];
-      for (int k = 0; k < n_cols; ++k)
-        {
-          image1[k][j] = pixel_row[k];
+          recut_matrix[j][k] = image->matrix2d[j][k];
         }
     }
 
-  int tmp_width = image->width;
-  int tmp_height = image->height;
-  image->matrix2d = image1;
-  image->width = tmp_height;
-  image->height = tmp_width;
-  h_flip (image);
-}
+  if (new_height < image->height) image->height = new_height;
+  else exit (0);
+  if (new_width < image->width) image->width = new_width;
+  else exit (0);
 
-void rot_left (struct IMAGE *image)
-{
-  // need to change in writing to file the loops order to use this
-  rot_right (image);
-  v_flip (image);
-  h_flip (image);
+  image->matrix2d = recut_matrix;
 }
 
 void write_to_file (struct IMAGE *image, char *f2_name)
@@ -131,14 +91,14 @@ void write_to_stdout (struct IMAGE *image)
 
 void write_to_matrix (char *buffer, char *tok, struct IMAGE *image)
 {
-  // allocating an array with the same width and height as input image
+  int h = 0, w = 0, c = 0;
+
   image->matrix2d = malloc (image->height * sizeof (image->matrix2d));
   for (int i = 0; i < image->height; ++i)
     {
       image->matrix2d[i] = malloc (sizeof (struct PIXEL) * image->width);
     }
 
-  int h = 0, w = 0, c = 0;
   while (c != image->height * image->width)
     {
       // we can have comments after this
@@ -296,115 +256,75 @@ void get_data_stdin (struct IMAGE *image)
         }
     }
 
-    image->file_size = image->width * image->height;
+  image->file_size = image->width * image->height;
 
   write_to_matrix (&buffer[0], &tok[0], image);
 }
 
-void wad (int argc, char *argv[argc], int option, int mod)
+void wad (char *filename, char *filename2, int option, int sx, int sy, int fx, int fy)
 {
   struct IMAGE image;
+  image.start_x = sx;
+  image.start_y = sy;
+  image.final_x = fx;
+  image.final_y = fy;
 
   if (option == 1)
     {
-      get_data (argv[1], &image);
-
-      switch (mod)
-        {
-          case 1:
-            h_flip(&image);
-          break;
-          case 2:
-            v_flip(&image);
-          break;
-          case 3:
-            d_flip(&image);
-          break;
-          case 4:
-            rot_right(&image);
-          break;
-          case 5:
-            rot_left(&image);
-          break;
-          default:
-            break;
-        }
-
+      get_data (filename, &image);
+      recut (&image);
       write_to_stdout (&image);
     }
   else if (option == 2)
     {
-      get_data (argv[1], &image);
-
-      switch (mod)
-        {
-          case 1:
-            h_flip(&image);
-            break;
-          case 2:
-            v_flip(&image);
-            break;
-          case 3:
-            d_flip(&image);
-            break;
-          case 4:
-            rot_right(&image);
-            break;
-          case 5:
-            rot_left(&image);
-            break;
-          default:
-            break;
-        }
-
-      write_to_file (&image, argv[1]);
+      get_data (filename, &image);
+      recut (&image);
+      write_to_file (&image, filename2);
     }
-  else if (option == 3)
+  else
     {
       get_data_stdin (&image);
-
-      switch (mod)
-        {
-          case 1:
-            h_flip(&image);
-          break;
-          case 2:
-            v_flip(&image);
-          break;
-          case 3:
-            d_flip(&image);
-          break;
-          case 4:
-            rot_right(&image);
-          break;
-          case 5:
-            rot_left(&image);
-          break;
-          default:
-            break;
-        }
-
+      recut (&image);
       write_to_stdout (&image);
     }
 }
 
 int main (int argc, char *argv[])
 {
-  int mod = 5;
-  switch (argc)
+  /*int dR, dG, dB;
+  dR = dG = dB = INT_MAX;
+  for (int i = 1; i < argc; ++i)
     {
-      case 1:
-        wad (argc, argv, 3, mod);
+      char *cur = argv[i];
+      int cur_int = (int ) strtol (cur, &cur, 10);
+
+      if (dR == INT_MAX) dR = cur_int;
+      else if (dG == INT_MAX) dG = cur_int;
+      else
+        {
+          dB = cur_int;
+          mod = i;
+          break;
+        }
+    }*/
+
+  int mod = 0;
+  int start_x = (int) strtol (argv[1], &argv[1], 10);
+  int start_y = (int) strtol (argv[2], &argv[2], 10);
+  int final_x = (int) strtol (argv[3], &argv[3], 10);
+  int final_y = (int) strtol (argv[4], &argv[4], 10);
+
+  mod = argc - 1;
+  switch (mod)
+    {
+      case 5:
+        wad (argv[mod], NULL, 1, start_x, start_y, final_x, final_y);
       break;
-      case 2:
-        wad (argc, argv, 1, mod);
-      break;
-      case 3:
-        wad (argc, argv, 2, mod);
+      case 6:
+        wad (argv[mod - 1], argv[mod], 2, start_x, start_y, final_x, final_y);
       break;
       default:
-        wad (argc, argv, 3, mod);
+        wad (NULL, NULL, 3, start_x, start_y, final_x, final_y);
       break;
     }
-
 }

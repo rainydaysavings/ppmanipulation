@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <math.h>
 
 typedef struct PIXEL {
     unsigned char r, g, b;
@@ -16,85 +15,76 @@ typedef struct IMAGE {
     struct PIXEL **matrix2d;
 } image_t;
 
-void rgb_mod(int dR, int dG, int dB, struct IMAGE *image) {
+void v_flip (struct IMAGE *image)
+{
+  pixel_t *pixel_column;
+  int mid = image->height / 2;
+  for (int j = 0; j < mid; ++j)
+    {
+      pixel_column = image->matrix2d[j];
+      image->matrix2d[j] = image->matrix2d[image->height - j - 1];
+      image->matrix2d[image->height - j - 1] = pixel_column;
+    }
+}
 
-  int r, g, b;
+void h_flip (struct IMAGE *image)
+{
+  pixel_t pixel;
+  int mid = image->width / 2;
   for (int j = 0; j < image->height; ++j)
     {
-      for (int k = 0; k < image->width; ++k)
+      for (int k = 0; k < mid; ++k)
         {
-          r = image->matrix2d[j][k].r + dR;
-          if (r > image->limit_value)
-            r = image->limit_value;
-          if (r < 0)
-            r = 0;
-
-          g = image->matrix2d[j][k].g + dG;
-          if (g > image->limit_value)
-            g = image->limit_value;
-          if (g < 0)
-            g = 0;
-
-          b = image->matrix2d[j][k].b + dB;
-          if (b > image->limit_value)
-            b = image->limit_value;
-          if (b < 0)
-            b = 0;
-
-          image->matrix2d[j][k].r = r;
-          image->matrix2d[j][k].g = g;
-          image->matrix2d[j][k].b = b;
+          pixel = image->matrix2d[j][k];
+          image->matrix2d[j][k] = image->matrix2d[j][image->width - 1 - k];
+          image->matrix2d[j][image->width - 1 - k] = pixel;
         }
     }
 }
 
-void grey(struct IMAGE *image) {
-
-  int r, g, b;
-  for (int j = 0; j < image->height; ++j)
-    {
-      for (int k = 0; k < image->width; ++k)
-        {
-          r = image->matrix2d[j][k].r;
-          g = image->matrix2d[j][k].g;
-          b = image->matrix2d[j][k].b;
-
-          double mod = round(0.2126 * r + 0.7152 * g + 0.0722 * b);
-          image->matrix2d[j][k].r = (int ) mod;
-          image->matrix2d[j][k].g = (int ) mod;
-          image->matrix2d[j][k].b = (int ) mod;
-        }
-    }
+void d_flip (struct IMAGE *image)
+{
+  v_flip (image);
+  h_flip (image);
 }
 
-void bw(struct IMAGE *image, int threshold) {
-
-  int r, g, b;
-  for (int j = 0; j < image->height; ++j)
+void rot_right (struct IMAGE *image)
+{
+  // need to change in writing to file the loops order to use this
+  struct PIXEL **image1;
+  image1 = malloc (image->width * sizeof (image->matrix2d));
+  for (int i = 0; i < image->width; ++i)
     {
-      for (int k = 0; k < image->width; ++k)
+      image1[i] = malloc (sizeof (struct PIXEL) * image->height);
+    }
+
+  int n_rows = image->height;
+  int n_cols = image->width;
+  pixel_t *pixel_row;
+
+  for (int j = 0; j < n_rows; ++j)
+    {
+      pixel_row = image->matrix2d[j];
+      for (int k = 0; k < n_cols; ++k)
         {
-          r = image->matrix2d[j][k].r;
-          g = image->matrix2d[j][k].g;
-          b = image->matrix2d[j][k].b;
-
-          double mod = round(0.2126 * r + 0.7152 * g + 0.0722 * b);
-
-          if (mod > threshold)
-            {
-              image->matrix2d[j][k].r = image->limit_value;
-              image->matrix2d[j][k].g = image->limit_value;
-              image->matrix2d[j][k].b = image->limit_value;
-            }
-          else
-            {
-              image->matrix2d[j][k].r = 0;
-              image->matrix2d[j][k].g = 0;
-              image->matrix2d[j][k].b = 0;
-            }
-
+          image1[k][j] = pixel_row[k];
         }
     }
+
+  int tmp_width = image->width;
+  int tmp_height = image->height;
+  image->matrix2d = image1;
+  image->width = tmp_height;
+  image->height = tmp_width;
+  h_flip (image);
+}
+
+void rot_left (struct IMAGE *image)
+{
+  // need to change in writing to file the loops order to use this
+  rot_right (image);
+  v_flip (image);
+  h_flip (image);
 }
 
 void write_to_file (struct IMAGE *image, char *f2_name)
@@ -311,61 +301,110 @@ void get_data_stdin (struct IMAGE *image)
   write_to_matrix (&buffer[0], &tok[0], image);
 }
 
-void wad (char *filename, int option, int threshold)
+void wad (int argc, char *argv[argc], int option, int mod)
 {
   struct IMAGE image;
+
   if (option == 1)
     {
-      get_data (filename, &image);
-      bw(&image, threshold);
+      get_data (argv[1], &image);
+
+      switch (mod)
+        {
+          case 1:
+            h_flip (&image);
+          break;
+          case 2:
+            v_flip (&image);
+          break;
+          case 3:
+            d_flip (&image);
+          break;
+          case 4:
+            rot_right (&image);
+          break;
+          case 5:
+            rot_left (&image);
+          break;
+          default:
+            break;
+        }
+
       write_to_stdout (&image);
     }
   else if (option == 2)
     {
-      get_data (filename, &image);
-      bw(&image, threshold);
-      write_to_file (&image, filename);
+      get_data (argv[1], &image);
+
+      switch (mod)
+        {
+          case 1:
+            h_flip (&image);
+          break;
+          case 2:
+            v_flip (&image);
+          break;
+          case 3:
+            d_flip (&image);
+          break;
+          case 4:
+            rot_right (&image);
+          break;
+          case 5:
+            rot_left (&image);
+          break;
+          default:
+            break;
+        }
+
+      write_to_file (&image, argv[1]);
     }
-  else
+  else if (option == 3)
     {
       get_data_stdin (&image);
-      bw(&image, threshold);
+
+      switch (mod)
+        {
+          case 1:
+            h_flip (&image);
+          break;
+          case 2:
+            v_flip (&image);
+          break;
+          case 3:
+            d_flip (&image);
+          break;
+          case 4:
+            rot_right (&image);
+          break;
+          case 5:
+            rot_left (&image);
+          break;
+          default:
+            break;
+        }
+
       write_to_stdout (&image);
     }
 }
 
 int main (int argc, char *argv[])
 {
-  /*int dR, dG, dB;
-  dR = dG = dB = INT_MAX;
-  for (int i = 1; i < argc; ++i)
+  int mod = 4;
+  switch (argc)
     {
-      char *cur = argv[i];
-      int cur_int = (int ) strtol (cur, &cur, 10);
-
-      if (dR == INT_MAX) dR = cur_int;
-      else if (dG == INT_MAX) dG = cur_int;
-      else
-        {
-          dB = cur_int;
-          mod = i;
-          break;
-        }
-    }*/
-
-  int mod = 0;
-  int threshold = (int ) strtol (argv[1], &argv[1], 10);
-  mod = argc - 1;
-  switch (mod)
-    {
+      case 1:
+        wad (argc, argv, 3, mod);
+      break;
       case 2:
-        wad (argv[mod], 1, threshold);
+        wad (argc, argv, 1, mod);
       break;
       case 3:
-        wad (argv[mod], 2, threshold);
+        wad (argc, argv, 2, mod);
       break;
       default:
-        wad (NULL, 3, threshold);
+        wad (argc, argv, 3, mod);
       break;
     }
+
 }
