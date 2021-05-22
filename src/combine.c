@@ -18,7 +18,7 @@ typedef struct IMAGE {
     pixel_t **matrix2d;
 } image_t;
 
-void combine (image_t *og, image_t *over, image_t *out)
+void combine (image_t *over, image_t *og, image_t *out)
 {
   pixel_t **image_out = malloc (og->height * sizeof (image_out));
   for (int i = 0; i < og->height; ++i)
@@ -30,7 +30,10 @@ void combine (image_t *og, image_t *over, image_t *out)
     {
       for (int k = 0; k < og->width; ++k)
         {
-
+          if ((j >= over->start_y && k >= over->start_x) && ((j < (over->height + over->start_y)) && (k < over->width + over->start_x)))
+            image_out[j][k] = over->matrix2d[j - over->start_y][k - over->start_x];
+          else
+            image_out[j][k] = og->matrix2d[j][k];
         }
     }
 
@@ -271,6 +274,10 @@ void wad (char *over, char *original, char *filename_out, int option, int sx, in
       get_data (over, &over_img);
       get_data (original, &og_img);
 
+      out.width = og_img.width;
+      out.height = og_img.height;
+      out.limit_value = og_img.limit_value;
+
       combine (&over_img, &og_img, &out);
       write_to_file (&out, filename_out);
     }
@@ -279,6 +286,10 @@ void wad (char *over, char *original, char *filename_out, int option, int sx, in
       get_data (over, &over_img);
       get_data (original, &og_img);
 
+      out.width = og_img.width;
+      out.height = og_img.height;
+      out.limit_value = og_img.limit_value;
+
       combine (&over_img, &og_img, &out);
       write_to_stdout (&out);
     }
@@ -286,6 +297,10 @@ void wad (char *over, char *original, char *filename_out, int option, int sx, in
     {
       get_data (over, &over_img);
       get_data_stdin (&og_img);
+
+      out.width = og_img.width;
+      out.height = og_img.height;
+      out.limit_value = og_img.limit_value;
 
       combine (&over_img, &og_img, &out);
       write_to_stdout (&out);
