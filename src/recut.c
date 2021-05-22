@@ -22,28 +22,36 @@ typedef struct IMAGE {
 
 void recut (struct IMAGE *image)
 {
-  int new_width = image->final_x - image->start_x;
-  int new_height = image->final_y - image->start_y;
+  int new_width = (image->final_x - image->start_x) + 1;
+  int new_height = (image->final_y - image->start_y) + 1;
+
+  if (image->final_x > image->width)
+    {
+      new_width = (image->width - image->start_x);
+      image->final_x = image->width - 1;
+    }
+  if (image->final_y > image->height)
+    {
+      new_height = (image->height - image->start_y);
+      image->final_y = image->height - 1;
+    }
 
   struct PIXEL **recut_matrix = malloc (new_height * sizeof (recut_matrix));
-  for (int i = 0; i < new_height; ++i)
+  for (int i = 0; i <= new_height; ++i)
     {
       recut_matrix[i] = malloc (sizeof (struct PIXEL) * new_width);
     }
 
-  for (int j = image->start_y; j < image->final_y; ++j)
+  for (int j = image->start_y; j <= image->final_y; ++j)
     {
-      for (int k = image->start_x; k < image->final_x; ++k)
+      for (int k = image->start_x; k <= image->final_x; ++k)
         {
-          recut_matrix[j][k] = image->matrix2d[j][k];
+          recut_matrix[j - image->start_y][k - image->start_x] = image->matrix2d[j][k];
         }
     }
 
-  if (new_height < image->height) image->height = new_height;
-  else exit (0);
-  if (new_width < image->width) image->width = new_width;
-  else exit (0);
-
+  image->width = new_width;
+  image->height = new_height;
   image->matrix2d = recut_matrix;
 }
 
@@ -291,22 +299,6 @@ void wad (char *filename, char *filename2, int option, int sx, int sy, int fx, i
 
 int main (int argc, char *argv[])
 {
-  /*int dR, dG, dB;
-  dR = dG = dB = INT_MAX;
-  for (int i = 1; i < argc; ++i)
-    {
-      char *cur = argv[i];
-      int cur_int = (int ) strtol (cur, &cur, 10);
-
-      if (dR == INT_MAX) dR = cur_int;
-      else if (dG == INT_MAX) dG = cur_int;
-      else
-        {
-          dB = cur_int;
-          mod = i;
-          break;
-        }
-    }*/
 
   int mod = 0;
   int start_x = (int) strtol (argv[1], &argv[1], 10);
