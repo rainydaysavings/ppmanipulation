@@ -1,3 +1,3 @@
 # ppmanipulation
 
-A simple program to manipulate PPM files.
+A set of small programs to manipulate PPM files
