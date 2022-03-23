@@ -1,3 +1,3 @@
 # ppmanipulation
 
-A set of small programs to manipulate PPM files
+PPM image file format matrix manipulation programs made in C
